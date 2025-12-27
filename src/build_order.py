@@ -13,11 +13,11 @@ class BuildOrder:
         self.url = url
 
         self.step_list : list[str] = []
-        self.step_dict : dict[Union[str, int]] = {}
+        self.step_dict : dict[Union[str, int], str] = {"url" : url}
 
         self.root = get_url(url, "div[class*='flex flex-col space-y-4']")
 
-        self._get_header()
+        self.name = self._get_header()
         self.ressources_list = self._get_ressources_list()
 
         # Read the build order steps, and save it
@@ -42,6 +42,8 @@ class BuildOrder:
 
         self.step_dict["civ_name"] = civ_type
         self.step_dict["build_order_name"] = build_order_name
+
+        return build_order_name
 
     def _get_ressources_list(self):
 
