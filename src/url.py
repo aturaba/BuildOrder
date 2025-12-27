@@ -1,4 +1,9 @@
 
+import json
+from os import listdir, mkdir
+from src.manage import MAIN_URL, BUILD_DB_PATH
+from typing import Any
+
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.common.by import By
@@ -29,3 +34,30 @@ def parse_root_without_condition(root, *tup_def):
     )[0]
 
     return current_root
+
+def list_all_builds_order():
+    url = MAIN_URL
+    root = get_url(url, "div[id*='root']")
+
+    div_all_builds = root[0].find_elements(
+        By.CSS_SELECTOR,
+        "div[class*='w-11/12 md:w-10/12 lg:w-9/12 mx-auto mb-10 flex flex-wrap justify-center']"
+    )
+
+    builds = WebDriverWait(div_all_builds[0], 10).until(
+        EC.presence_of_all_elements_located((By.TAG_NAME, "a"))
+    )
+
+    build_dict_export = {
+        k : elt.get_attribute("href")
+        for k, elt in enumerate(builds)
+    }
+
+    if "static" not in listdir():
+        mkdir("static")
+    
+    export_json(build_dict_export, BUILD_DB_PATH)
+
+def export_json(data:dict[Any, Any], filename:str):
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)

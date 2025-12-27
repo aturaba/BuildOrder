@@ -4,7 +4,7 @@ os.environ["GH_TOKEN"] = "github_pat_11AXUZLIY047ol3BbJ1wgm_aqSslEWYTH048rnjucbX
 
 import json
 from typing import Union
-from src.url import get_url, parse_root_without_condition
+from src.url import get_url, parse_root_without_condition, export_json
 from selenium.webdriver.common.by import By
 
 class BuildOrder:
@@ -24,7 +24,14 @@ class BuildOrder:
         self._get_order_list()
 
         # Export the build order
-        self._export()
+        for i, value in enumerate(self.step_list):
+            self.step_dict[i] = value
+
+        export_json(self.step_dict, "build_order.json")
+
+        print(f"\033[34m{self.name}\033[0m")
+        print(f"\033[34m{self.url}\033[0m")
+        print(f"\033[34mbuild_order.json created\033[0m")
 
     def _get_header(self):
         civ_type = parse_root_without_condition(
@@ -119,11 +126,3 @@ class BuildOrder:
                 # Append the actions
                 if step_text != "":
                     self.step_list.append(step_text)
-
-    def _export(self, filename:str = "build_order.json"):
-
-        for i, value in enumerate(self.step_list):
-            self.step_dict[i] = value
-
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(self.step_dict, f, indent=4, ensure_ascii=False)
