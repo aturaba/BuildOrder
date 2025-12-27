@@ -56,7 +56,7 @@ class BuildOrder:
                 By.CSS_SELECTOR,
                 "div[class*='flex justify-center']"
             )[0].text
-        )        
+        )
 
     def _get_one_line_grid(self, grid_line):
         # List the action to realize

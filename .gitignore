@@ -1,5 +1,8 @@
 # Ignore all JSON files
 *.json
 
+# Ignore local python files
+/*.py
+
 # Ignore Pipenv lock file
 Pipfile.lock
