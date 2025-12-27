@@ -3,64 +3,66 @@ import os
 os.environ["GH_TOKEN"] = "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"
 
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
+from typing import Union
+from src.url import get_url, parse_root_without_condition
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.firefox import GeckoDriverManager
 
 class BuildOrder:
 
     def __init__(self, url:str):
         self.url = url
-        self._get_url()
-        self._get_civilization()
+
+        self.step_list : list[str] = []
+        self.step_dict : dict[Union[str, int]] = {}
+
+        self.root = get_url(url, "div[class*='flex flex-col space-y-4']")
+
+        self._get_header()
+        self.ressources_list = self._get_ressources_list()
 
         # Read the build order steps, and save it
-        self.step_list : list[str] = []
         self._get_order_list()
 
         # Export the build order
         self._export()
 
-    def _get_url(self):
-        options = webdriver.FirefoxOptions()
-        options.add_argument("--headless")
-        driver = webdriver.Firefox(
-            service=Service(GeckoDriverManager().install()),
-            options=options
+    def _get_header(self):
+        civ_type = parse_root_without_condition(
+            self.root,
+            "div[class*='flex justify-center mt-10 -mb-10']",
+            "div[class*='flex space-x-1 text-main-dark']",
+            "span[class*='pt-1']"
+        ).text
+
+        build_order_name = parse_root_without_condition(
+            self.root,
+            "div[class*='text-center']",
+            "h1[class*='text-primary-dark my-10 uppercase font-bold tracking-widest text-2xl text-center']",
+        ).text
+
+        self.step_dict["civ_name"] = civ_type
+        self.step_dict["build_order_name"] = build_order_name
+
+    def _get_ressources_list(self):
+
+        ressources_div = parse_root_without_condition(
+            self.root,
+            "div[class*='flex flex-col w-11/12 md:max-w-2xl m-auto text-main-dark pb-16 text-xs md:text-base']",
+            "div[class*='flex justify-end']",
+            "div[class*='w-full grid overflow-hidden grid-cols-12 grid-rows-1']",
+            "div[class*='col-start-10 md:col-start-9 col-span-3 md:col-span-4 flex justify-around w-full']",
         )
 
-        driver.get(self.url)
-        wait = WebDriverWait(driver, 1)
-        self.root = wait.until(
-            EC.presence_of_all_elements_located(
-                (
-                    By.CSS_SELECTOR,
-                    "div[class*='flex flex-col space-y-4']"
-                )
-            )
-        )
+        ressources_list = [
+            div.get_attribute("Alt")
+            for div in ressources_div.find_elements(By.CSS_SELECTOR, "img[class*='w-4 h-4 md:w-6 md:h-6']")
+        ]
 
-    def _get_civilization(self):
+        return ressources_list
 
-        print(
-            self.root[0].find_elements(
-                By.CSS_SELECTOR,
-                "div[class*='flex space-x-1 text-main-dark']"
-            )[0].text
-        )
-        print(
-            self.root[0].find_elements(
-                By.CSS_SELECTOR,
-                "div[class*='flex justify-center']"
-            )[0].text
-        )
 
     def _get_one_line_grid(self, grid_line):
         # List the action to realize
-        ressources_list = ["wood", "food", "gold", "stone"]
         step_text = ""
 
         # List the action to realize
@@ -78,7 +80,7 @@ class BuildOrder:
 
             # For each ressources, show the villager count to consider
             ressources_str_list = [
-                f"{ressources_list[k]} : {ressources_elt.text}"
+                f"{self.ressources_list[k]} : {ressources_elt.text}"
                 for k, ressources_elt in enumerate(ressources_grid_p)
             ]
             step_text += " | ".join(ressources_str_list)
@@ -117,6 +119,9 @@ class BuildOrder:
                     self.step_list.append(step_text)
 
     def _export(self, filename:str = "build_order.json"):
-        step_dict = {i: value for i, value in enumerate(self.step_list)}
+
+        for i, value in enumerate(self.step_list):
+            self.step_dict[i] = value
+
         with open(filename, "w", encoding="utf-8") as f:
-            json.dump(step_dict, f, indent=4, ensure_ascii=False)
+            json.dump(self.step_dict, f, indent=4, ensure_ascii=False)
