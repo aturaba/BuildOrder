@@ -1,0 +1,5 @@
+# Ignore all JSON files
+*.json
+
+# Ignore Pipenv lock file
+Pipfile.lock
