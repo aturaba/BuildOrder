@@ -7,6 +7,8 @@ name = "pypi"
 selenium = "==4.39.0"
 webdriver-manager = "==4.0.2"
 
+[scripts]
+
 [dev-packages]
 
 [requires]
